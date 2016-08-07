@@ -1,9 +1,18 @@
 \listfiles
-\documentclass[landscape]{kalenderRN}
+\documentclass[landscape]{boncalendar}
+%\renewcommand*\year{2016}
+\noevents %(global)
+%\nogap %(between columns)
+%\setgap{SIZE} %(between columns, default is 4mm)
+%\shortmonthnames
+\nogap
+%Compiling more than one Kalender or TeilKalender at once WILL produce
+%errors concering events. Either switch events off or compile each
+%(Teil)Kalender in seperate files / at seperate times.
 
-%\renewcommand*\year{2018}
-%\noevents
+\Teilkalender[Termine]{2}{7}
+\Teilkalender[Termine]{8}{12}
+%\Kalender[Termine]
 
 \begin{document}
-  \makeTeilkalender[Termine]{1}{8}
-\end{document} 
+\end{document}

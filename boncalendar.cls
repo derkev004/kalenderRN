@@ -241,8 +241,8 @@
 \def\cal@monthspread{25}
 \setlength{\cal@colsep}{4mm}
 
-\newcommand{\setcolumspacing}[1]{\setlength{\cal@colsep}{#1}}
-\newcommand{\nocolumspacing}{\setlength{\cal@colsep}{6pt}}
+\newcommand{\nogap}{\setlength{\cal@colsep}{6.7pt}}
+\newcommand{\setgap}[1]{\setlength{\cal@colsep}{#1}}
 
 
 \newcommand{\calccalendar}[2]{
@@ -319,9 +319,6 @@
 \totalcalendartrue
 \AfterEndPreamble{\makeKalender[#1]}
 }
-
-\newcommand{\nogap}{\setlength{\cal@colsep}{6.7pt}}
-\newcommand{\setgap}[1]{\setlength{\cal@colsep}{#1}}
 
 \AtBeginDocument{%
   \begingroup

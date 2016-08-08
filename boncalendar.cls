@@ -39,8 +39,9 @@
   \setsansfont[Ligatures=TeX]{TeX Gyre Heros}
 \else
   \RequirePackage[T1]{fontenc}
+  \RequirePackage[utf8]{inputenc}
   \RequirePackage{textcomp}
-  \RequirePackage{lmodebon}
+  \RequirePackage{lmodern}
   \RequirePackage{tgheros}
 \fi
 

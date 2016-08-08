@@ -47,15 +47,6 @@
 
 \renewcommand*\familydefault{\sfdefault}
 
-\RequirePackage{etoolbox}
-\AtEndPreamble{% "etoolbox"
-  \ifbon@XeOrLua\else
-    \@ifpackageloaded{inputenc}{}{%
-      \RequirePackage[utf8]{inputenc}%
-    }%
-  \fi
-}
-
 \RequirePackage[main=ngerman]{babel}
 
 \RequirePackage[ngerman]{translator}

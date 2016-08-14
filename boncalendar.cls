@@ -22,13 +22,15 @@
 
 \renewcommand{\headrulewidth}{0.0pt}
 \setlength{\headheight}{10ex}
-\newcommand*\bon@title{}
-\chead{%
-  \raisebox{-.3\height}[0pt][0pt]{\parbox[b]{\textwidth}{%
-  \fontsize{60}{70}\selectfont\textbf{\bon@year}
-  \textbf{\Huge\bon@title}\hfill
-  }}%
+\newcommand*\bon@title[1]{
+  \chead{%
+    \raisebox{-.3\height}[0pt][0pt]{\parbox[b]{\textwidth}{%
+    \fontsize{60}{70}\selectfont\textbf{\bon@year}
+    \textbf{\Huge#1}\hfill
+    }}%
+  }
 }
+\bon@title{}
 \cfoot{}
 
 \newif\ifbon@XeOrLua \bon@XeOrLuafalse
@@ -338,8 +340,9 @@
   \ifbon@notFirstCalendar
     \bon@notFirstCalendarfalse
   \else
-    \pagebreak
+    \newpage
   \fi
+  \resizebox{\linewidth}{!}{
   \begin{tikzpicture}[every day/.style={anchor=north}]%
     \calendar[dates=#1 to #2,name=cal,day text={\%d=},day yshift=3em,%]
       day code={%
@@ -369,6 +372,7 @@
     \addevents{#3}{#4}
     %\pgfcalendarifdate{#1}{at most=06-last}{\bon@events@I}{\bon@events@II}%
   \end{tikzpicture}
+  }
 }
 %subtle, but necessary changes require most of this code to be duplicate
 %due to readbility
@@ -376,8 +380,9 @@
   \ifbon@notFirstCalendar
     \bon@notFirstCalendarfalse
   \else
-    \pagebreak
+    \newpage
   \fi
+  \resizebox{\linewidth}{!}{
   \begin{tikzpicture}[every day/.style={anchor=north}]%
     \calendar[dates=#1 to #2,name=cal,day text={\%d=},%]
       day code={%
@@ -407,34 +412,27 @@
     \addevents{#3}{#4}
     %\pgfcalendarifdate{#1}{at most=06-last}{\bon@events@I}{\bon@events@II}%
   \end{tikzpicture}
-}
-
-\newcommand*\makeKalender[1][]{%
-  \gdef\bon@title{#1}%
-  \calccalendar{1}{6}
-  \centering
-    \bon@makeKalender{\bon@year-01-01}{\bon@year-06-30}{1}{6}%
-    \pagebreak
-    \bon@makeKalender{\bon@year-07-01}{\bon@year-12-31}{7}{12}%
+  }
 }
 
 \newcommand*\makeTeilkalender[3][]{%
-  \def\bon@title{#1}%
   \calccalendar{#2}{#3}
   \def\eom{\geteom{#3}}%end of month
-  \centering
-    \bon@makeKalender{\bon@year-#2-01}{\bon@year-#3-\eom}{#2}{#3}%
+  %\centering
+  \bon@makeKalender{\bon@year-#2-01}{\bon@year-#3-\eom}{#2}{#3}%
+  \bon@title{#1}%
 }
 
 \newcommand*\makeDoppelkalender[1][]{%
-  \def\bon@title{#1}%
   \calccalendar{1}{6}
   \setlength{\cal@colheight}{\dimexpr \textheight / \numexpr 66 \relax}
   \def\eom{\geteom{6}}%end of month
-  \centering
+  %\centering
     \bon@makeHalbkalender{\bon@year-01-01}{\bon@year-06-\eom}{1}{6}%
+    \bon@title{#1}%
   \calccalendar{7}{12}
   \setlength{\cal@colheight}{\dimexpr \textheight / \numexpr 66 \relax}
+  \bon@notFirstCalendartrue
   \def\eom{\geteom{12}}%end of month
   \tikz \draw[color=white] (0,0) -- (\textwidth,0);
     \bon@makeHalbkalender{\bon@year-07-01}{\bon@year-12-\eom}{7}{12}%
@@ -453,7 +451,9 @@
 
 \newcommand*{\Kalender}[1][]{
 \totalcalendartrue
-\AfterEndPreamble{\makeKalender[#1]}
+%\AfterEndPreamble{\makeKalender[#1]}
+\AfterEndPreamble{\makeTeilkalender[#1]{1}{6}}
+\AfterEndPreamble{\makeTeilkalender[#1]{7}{12}}
 }
 
 \AtBeginDocument{%
@@ -465,4 +465,5 @@
   \endgroup
 }
 \pagestyle{fancy}
+\AfterEndPreamble{\centering}
 \endinput

@@ -1,18 +1,20 @@
 \listfiles
-\documentclass[landscape]{boncalendar}
+\documentclass{boncalendar}
 %\renewcommand*\year{2016}
-\noevents %(global)
+%\noevents %(global)
 %\nogap %(between columns)
 %\setgap{SIZE} %(between columns, default is 4mm)
 %\shortmonthnames
-\nogap
-%Compiling more than one Kalender or TeilKalender at once WILL produce
-%errors concering events. Either switch events off or compile each
-%(Teil)Kalender in seperate files / at seperate times.
+%\nogap
+\seteventscale{0.85} %Scale the font size of event names, default is 1.0
 
-\Teilkalender[Termine]{2}{7}
-\Teilkalender[Termine]{8}{12}
+
+\Teilkalender[Termine]{02}{07}
+\Teilkalender[Termine]{10}{12}
 %\Kalender[Termine]
+%\Doppelkalender
+
 
 \begin{document}
+
 \end{document}

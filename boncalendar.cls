@@ -156,12 +156,9 @@
   \ifnum#1=2
     \ifnum\intcalcMod{\bon@year}{4}=0
       29
-      \ifnum\intcalcMod{\bon@year}{100}=0
-        \ifnum\intcalcMod{\bon@year}{400}=0\else
+      \else
           28
-        \fi
       \fi
-    \fi
   \else%ifnum#2=2
     \ifnum#1=3
       31
@@ -208,6 +205,187 @@
 \fi
 }
 
+\renewcommand{\geteom}[1]
+{
+\ifcase#1
+0\or%0
+31\or%1
+\ifnum\intcalcMod{\bon@year}{4}=0 29\else 28\fi \or%2
+31\or%3
+30\or%4
+31\or%5
+30\or%6
+31\or%7
+31\or%8
+30\or%9
+31\or%10
+30\or%11
+31\else%12
+0%
+\fi%
+}
+
+\newcommand{\getdayofweek}[3]
+{
+%Originale C-Implementierung mit jeweiliger Übersetzung
+%y -= m < 3;
+% -> Wird mittels dynamischer Berechnung realisiert, weil zur Laufzeit billig
+%    \ifnum#2<3\numexpr#1-1\relax\else#1\fi
+%static int t[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
+% -> Zugriff auf statisches, unveränderliches Array auf ifcase abbilden
+%    \ifcase#2\or0\or3\or2\or5\or0\or3\or5\or1\or4\or6\or2\or4\else0\fi
+%return (y + y/4 - y/100 + y/400 + t[m-1] + d) % 7;
+% -> hier fließen die Komponenten zusammen, vor dem abschließenden Modulo wird
+%    6 addiert, da ich Sonntag mit 6 darstelle, nicht als 0 (cyclic shift)
+\intcalcMod{%
+\ifnum#2<3 #1-1\else#1\fi +%
+\intcalcDiv{\ifnum#2<3 #1-1 \else#1\fi}{4} -%
+\intcalcDiv{\ifnum#2<3 #1-1 \else#1\fi}{100} +%
+\intcalcDiv{\ifnum#2<3 #1-1 \else#1\fi}{400} +%
+\ifcase#2\or%
+0\or%1
+3\or%2
+2\or%3
+5\or%4
+0\or%5
+3\or%6
+5\or%7
+1\or%8
+4\or%9
+6\or%10
+2\or%11
+4\else%12
+0\fi
++ #3 + 6}{7}
+}
+
+\newcommand{\seteasterdate}[1]
+{
+  \xdef\easterhelp@a{\intcalcMod{#1}{19}}
+  \xdef\easterhelp@b{\intcalcDiv{#1}{100}}
+  \xdef\easterhelp@c{\intcalcMod{#1}{100}}
+  \xdef\easterhelp@d{\intcalcDiv{\easterhelp@b}{4}}
+  \xdef\easterhelp@e{\intcalcMod{\easterhelp@b}{4}}
+  \xdef\easterhelp@f{\intcalcDiv{\easterhelp@b + 8}{25}}
+  \xdef\easterhelp@g{\intcalcDiv{\easterhelp@b - \easterhelp@f + 1}{3}}
+  \xdef\easterhelp@h{\intcalcMod{ (19 * \easterhelp@a) + \easterhelp@b - \easterhelp@d - \easterhelp@g + 15 }{30}}
+  \xdef\easterhelp@i{\intcalcDiv{\easterhelp@c}{4}}
+  \xdef\easterhelp@k{\intcalcMod{\easterhelp@c}{4}}
+  \xdef\easterhelp@l{\intcalcMod{ 32 + (2 * \easterhelp@e) + (2 * \easterhelp@i) - \easterhelp@h - \easterhelp@k }{7}}
+  \xdef\easterhelp@m{\intcalcDiv{ \easterhelp@a + (11 * \easterhelp@h) + (22 * \easterhelp@l) }{451}}
+  \xdef\easterhelp@n{\intcalcDiv{ \easterhelp@h + \easterhelp@l - (7 * \easterhelp@m) + 114 }{31}}
+  \xdef\easterhelp@p{\intcalcMod{ \easterhelp@h + \easterhelp@l - (7 * \easterhelp@m) + 114 }{31}}
+  \xdef\easter@mon{\easterhelp@n}
+  \xdef\easter@day{\the\numexpr\easterhelp@p + 1}
+  \xdef\geteasterdate{#1-0\easter@mon-\ifnum\easter@day<10 0\easter@day\else\easter@day\fi}
+  \xdef\geteastermonth{\easter@mon}
+  \xdef\geteasterday{\easter@day}
+}
+
+\newcounter{dayinc@day}
+\newcounter{dayinc@month}
+\newcounter{dayinc@increment}
+\newcommand\dayinc[2]
+{
+  \setcounter{dayinc@day}{#2}
+  \stepcounter{dayinc@day}
+  \setcounter{dayinc@month}{#1}
+  \ifnum\value{dayinc@day}>\geteom{#1}
+    \setcounter{dayinc@day}{1}
+    \stepcounter{dayinc@month}
+  \fi
+}
+\newcommand\daydec[2]
+{
+  \setcounter{dayinc@day}{#2}
+  \setcounter{dayinc@day}{\numexpr \value{dayinc@day} - 1 \relax}
+  \setcounter{dayinc@month}{#1}
+  \ifnum\value{dayinc@day}=0
+    \setcounter{dayinc@month}{\numexpr \value{dayinc@month} - 1 \relax}
+    \setcounter{dayinc@day}{\geteom{dayinc@month}}
+\fi
+}
+\newcommand{\stepdayinc}[1][1]
+{
+  \forloop{dayinc@increment}{1}{\arabic{dayinc@increment} < \numexpr #1 + 1 \relax}
+  {
+    \dayinc{\value{dayinc@month}}{\value{dayinc@day}}
+  }
+}
+
+\newcommand{\stepdaydec}[1][1]
+{
+  \forloop{dayinc@increment}{1}{\arabic{dayinc@increment} < \numexpr #1 + 1 \relax}
+  {
+    \daydec{\value{dayinc@month}}{\value{dayinc@day}}
+  }
+}
+
+\newcommand{\setholiday}[3]
+{
+  \xdef\holiday@year{\number #1}
+  \xdef\holiday@mon{\number #2}
+  \xdef\holiday@day{\number #3}
+
+  \def\holiday@bool{1=2}
+  \ifthenelse{\holiday@day=1 \AND \holiday@mon=1}{\def\holiday@bool{1=1}}{}
+  \ifthenelse{\holiday@day=1 \AND \holiday@mon=5}{\def\holiday@bool{1=1}}{}
+  \ifthenelse{\holiday@day=3 \AND \holiday@mon=10}{\def\holiday@bool{1=1}}{}
+  \ifthenelse{\holiday@day=1 \AND \holiday@mon=11}{\def\holiday@bool{1=1}}{}
+  \ifthenelse{\holiday@day=24 \AND \holiday@mon=12}{\def\holiday@bool{1=1}}{}
+  \ifthenelse{\holiday@day=25 \AND \holiday@mon=12}{\def\holiday@bool{1=1}}{}
+  \ifthenelse{\holiday@day=26 \AND \holiday@mon=12}{\def\holiday@bool{1=1}}{}
+  \seteasterdate{\holiday@year}
+
+  \daydec{\geteastermonth}{\geteasterday}
+  \stepdaydec
+  \ifthenelse{\holiday@day=\value{dayinc@day} \AND \holiday@mon=\value{dayinc@month}}{\def\holiday@bool{1=1}}{}
+  %\typeout{Karfreitag: \year-\arabic{dayinc@month}-\arabic{dayinc@day}}
+
+  \stepdayinc[2]
+  \ifthenelse{\holiday@day=\value{dayinc@day} \AND \holiday@mon=\value{dayinc@month}}{\def\holiday@bool{1=1}}{}
+  %\typeout{Ostersonntag: \year-\geteastermonth-\geteasterday}
+
+  \stepdayinc
+  \ifthenelse{\holiday@day=\value{dayinc@day} \AND \holiday@mon=\value{dayinc@month}}{\def\holiday@bool{1=1}}{}
+  %\typeout{Ostermontag: \year-\arabic{dayinc@month}-\arabic{dayinc@day}}
+
+  \stepdayinc[38]
+  \ifthenelse{\holiday@day=\value{dayinc@day} \AND \holiday@mon=\value{dayinc@month}}{\def\holiday@bool{1=1}}{}
+  %\typeout{Christi Himmelfahrt: \year-\arabic{dayinc@month}-\arabic{dayinc@day}}
+
+  \stepdayinc[10]
+  \ifthenelse{\holiday@day=\value{dayinc@day} \AND \holiday@mon=\value{dayinc@month}}{\def\holiday@bool{1=1}}{}
+  %\typeout{Pfingstsonntag: \year-\arabic{dayinc@month}-\arabic{dayinc@day}}
+
+  \stepdayinc
+  \ifthenelse{\holiday@day=\value{dayinc@day} \AND \holiday@mon=\value{dayinc@month}}{\def\holiday@bool{1=1}}{}
+  %\typeout{Pfingstmontag: \year-\arabic{dayinc@month}-\arabic{dayinc@day}}
+
+  \stepdayinc[10]
+  \ifthenelse{\holiday@day=\value{dayinc@day} \AND \holiday@mon=\value{dayinc@month}}{\def\holiday@bool{1=1}}{}
+  %\typeout{Fronleichnam: \year-\arabic{dayinc@month}-\arabic{dayinc@day}}
+
+  \let\getholiday\holiday@bool
+}
+
+\newcommand{\setworkholiday}[3]
+{
+  \xdef\holiday@year{\number #1}
+  \xdef\holiday@mon{\number #2}
+  \xdef\holiday@day{\number #3}
+
+  \def\holiday@bool{1=2}
+  \ifthenelse{\holiday@day=24 \AND \holiday@mon=12}{\def\holiday@bool{1=1}}{}
+  \ifthenelse{\holiday@day=25 \AND \holiday@mon=12}{\def\holiday@bool{1=1}}{}
+  \ifthenelse{\holiday@day=26 \AND \holiday@mon=12}{\def\holiday@bool{1=1}}{}
+  \seteasterdate{\holiday@year}
+
+  \dayinc{\geteastermonth}{\geteasterday}
+  \ifthenelse{\holiday@day=\value{dayinc@day} \AND \holiday@mon=\value{dayinc@month}}{\def\holiday@bool{1=1}}{}
+
+  \let\getholiday\holiday@bool
+}
 
 \newcommand*\bon@event@i[2]{%
   \protected@edef\@tempa{\noexpand\@ifundefined{pgf@sh@ns@cal-#1}{}{%
@@ -215,6 +393,8 @@
       \noexpand\makebox[0pt][r]{\noexpand\resizebox{!}{1.15ex}{%
         \noexpand\varwidth{\cal@colwidth}\noexpand\scalebox{\eventscale}{#2}\noexpand\strut\noexpand\endvarwidth}}};}%
   }%
+  \expandafter\ifx\csname bon@event-#1\endcsname\relax
+  \expandafter\def\csname bon@event-#1\endcsname{\@ne}
   \pgfcalendarifdate{#1}{at most=01-last}% first half-year?
   {\expandafter\g@addto@macro\expandafter\bon@events@I\expandafter{\@tempa}}
   {
@@ -259,6 +439,9 @@
     }%
     \expandafter\g@addto@macro\expandafter\bon@backgrounds\expandafter{\@tempa}%
   \fi
+  \else
+  \typeout{Warning: duplicate calendar entry for #1: #2}
+  \fi
 }
 
 \definecolor{dark}{HTML}{A57C00}
@@ -297,42 +480,20 @@
 {
   \forloop{curmonth}{#1}{\value{curmonth}<\numexpr #2 + 1 \relax}
   {
-    \ifnum\value{curmonth}=1% first half-year?
-    {\bon@events@I}
-    \else
-    \ifnum\value{curmonth}=2% first half-year?
-    {\bon@events@II}
-    \else
-    \ifnum\value{curmonth}=3% first half-year?
-    {\bon@events@III}
-    \else
-    \ifnum\value{curmonth}=4
-    {\bon@events@IV}
-    \else
-    \ifnum\value{curmonth}=5
-    {\bon@events@V}
-    \else
-    \ifnum\value{curmonth}=6
-    {\bon@events@VI}
-    \else
-    \ifnum\value{curmonth}=7
-    {\bon@events@VII}
-    \else
-    \ifnum\value{curmonth}=8
-    {\bon@events@VIII}
-    \else
-    \ifnum\value{curmonth}=9
-    {\bon@events@XI}
-    \else
-    \ifnum\value{curmonth}=10
-    {\bon@events@X}
-    \else
-    \ifnum\value{curmonth}=11
-    {\bon@events@XI}
-    \else
-    \ifnum\value{curmonth}=12
-    {\bon@events@XII}
-    \fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi\fi
+    \ifcase\value{curmonth}\or
+      \bon@events@I \or
+      \bon@events@II \or
+      \bon@events@III \or
+      \bon@events@IV \or
+      \bon@events@V \or
+      \bon@events@VI \or
+      \bon@events@VII \or
+      \bon@events@VIII \or
+      \bon@events@XI \or
+      \bon@events@X \or
+      \bon@events@XI \or
+      \bon@events@XII
+    \fi
   }
 }
 
@@ -425,16 +586,16 @@
 
 \newcommand*\makeDoppelkalender[1][]{%
   \calccalendar{1}{6}
-  \setlength{\cal@colheight}{\dimexpr \textheight / \numexpr 66 \relax}
+  \setlength{\cal@colheight}{\dimexpr \textheight / \numexpr 67 \relax}
   \def\eom{\geteom{6}}%end of month
   %\centering
     \bon@makeHalbkalender{\bon@year-01-01}{\bon@year-06-\eom}{1}{6}%
     \bon@title{#1}%
   \calccalendar{7}{12}
-  \setlength{\cal@colheight}{\dimexpr \textheight / \numexpr 66 \relax}
+  \setlength{\cal@colheight}{\dimexpr \textheight / \numexpr 67 \relax}
   \bon@notFirstCalendartrue
   \def\eom{\geteom{12}}%end of month
-  \tikz \draw[color=white] (0,0) -- (\textwidth,0);
+  %\tikz \draw[color=white] (0,0) -- (\textwidth,0);
     \bon@makeHalbkalender{\bon@year-07-01}{\bon@year-12-\eom}{7}{12}%
   \setlength{\cal@colheight}{\dimexpr \textheight / \numexpr 33 \relax }
 }

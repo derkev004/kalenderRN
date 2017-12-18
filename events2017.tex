@@ -1,0 +1,130 @@
+
+% Jährlich wiederkehrende Termine sollten das Makro \year enthalten.
+% Yearly events should contain the macro \year.
+\usepackage{forloop,calc,ifthen}
+\iffalse
+\event*{\year-01-01}{}
+\event*{\year-05-01}{}
+\event*{\year-10-03}{}
+\event{\year-12-24}{}
+\event*{\year-12-25}{}
+\event*{\year-12-26}{}
+\fi
+
+\newcounter{monatcnt}
+\setcounter{monatcnt}{1}
+\newcounter{tagcnt}
+\setcounter{tagcnt}{1}
+\newcounter{wochentagcnt}
+%\setcounter{wochentagcnt}{6} %Jahr fängt mit Sonntag an.
+\setcounter{wochentagcnt}{\getdayofweek{\year}{1}{1}} %Jahr fängt mit Sonntag an.
+\newcounter{schichtcnt}
+\setcounter{schichtcnt}{0} %Schichtanfang ist letzter freier Tag
+
+
+\forloop{monatcnt}{1}{\value{monatcnt} < 13}
+{
+  \forloop{tagcnt}{1}{\value{tagcnt} < \numexpr \geteom{\value{monatcnt}} + 1 \relax}
+  {
+    \setcounter{wochentagcnt}{\intcalcMod{\value{wochentagcnt}+1}{7}}
+    \ifthenelse{ \value{wochentagcnt}=4 }
+    {}
+    {
+      \setcounter{schichtcnt}{\intcalcMod{\value{schichtcnt}+1}{5}}
+    }
+
+    \setworkholiday{\year}{\arabic{monatcnt}}{\arabic{tagcnt}}
+
+    \ifthenelse{\value{wochentagcnt} = 0 \OR \getholiday}
+    {
+      \ifthenelse{\value{schichtcnt} = 2}
+      {\def\thistext{Früh}}
+      {
+        \ifthenelse{\value{schichtcnt} = 3}
+        {\def\thistext{Nacht}}
+        {\def\thistext{-}}
+      }
+    }
+    {
+      \ifthenelse{ \value{schichtcnt} = 1}
+      {\def\thistext{früh}}
+      {
+        \ifthenelse{ \value{schichtcnt} = 2}
+        {\def\thistext{spät}}
+        {
+          \ifthenelse{ \value{schichtcnt} = 3}
+          {\def\thistext{nacht}}
+          {\def\thistext{-}}
+        }
+      }
+    }
+
+    \ifthenelse{ \equal{\thistext}{-} }
+    {}
+    {
+      \xdef\thismonat{\arabic{monatcnt}}
+      \xdef\thistag{\arabic{tagcnt}}
+
+      \ifnum\thismonat<10\xdef\thismonat{0\arabic{monatcnt}}\fi
+      \ifnum\thistag<10\xdef\thistag{0\arabic{tagcnt}}\fi
+
+      \setholiday{\year}{\arabic{monatcnt}}{\arabic{tagcnt}}
+      \ifthenelse{ \getholiday }
+      {
+      \event*{\year-\thismonat-\thistag}{\thistext}
+      }
+      {
+      \event{\year-\thismonat-\thistag}{\thistext}
+      }
+    }
+
+  }
+}
+
+\event*{\year-01-01}{Neujahr}
+\event*{\year-05-01}{Tag der Arbeit}
+\event*{\year-10-03}{Tag der dt. Einheit}
+\event*{\year-11-01}{Allerheiligen}
+\event{\year-12-24}{}
+\event*{\year-12-25}{1. Weihnachtsfeiertag}
+\event*{\year-12-26}{2. Weihnachtsfeiertag}
+
+\seteasterdate{\year}
+
+\daydec{\geteastermonth}{\geteasterday}
+\stepdaydec
+\event*{\year-\ifnum\value{dayinc@month}<10 0\arabic{dayinc@month}\else\arabic{dayinc@month}\fi-%
+\ifnum\value{dayinc@day}<10 0\arabic{dayinc@day}\else\arabic{dayinc@day}\fi}{Karfreitag}
+%\typeout{Karfreitag: \year-\arabic{dayinc@month}-\arabic{dayinc@day}}
+
+\stepdayinc[2]
+\event*{\year-\ifnum\geteastermonth<10 0\geteastermonth\else\geteastermonth\fi-%
+\ifnum\geteasterday<10 0\geteasterday\else\geteasterday\fi}{Ostersonntag}
+%\typeout{Ostersonntag: \year-\geteastermonth-\geteasterday}
+
+\stepdayinc
+\event*{\year-\ifnum\value{dayinc@month}<10 0\arabic{dayinc@month}\else\arabic{dayinc@month}\fi-%
+\ifnum\value{dayinc@day}<10 0\arabic{dayinc@day}\else\arabic{dayinc@day}\fi}{Ostermontag}
+%\typeout{Ostermontag: \year-\arabic{dayinc@month}-\arabic{dayinc@day}}
+
+\stepdayinc[38]
+\event*{\year-\ifnum\value{dayinc@month}<10 0\arabic{dayinc@month}\else\arabic{dayinc@month}\fi-%
+\ifnum\value{dayinc@day}<10 0\arabic{dayinc@day}\else\arabic{dayinc@day}\fi}{Christi Himmelfahrt}
+%\typeout{Christi Himmelfahrt: \year-\arabic{dayinc@month}-\arabic{dayinc@day}}
+
+\stepdayinc[10]
+\event*{\year-\ifnum\value{dayinc@month}<10 0\arabic{dayinc@month}\else\arabic{dayinc@month}\fi-%
+\ifnum\value{dayinc@day}<10 0\arabic{dayinc@day}\else\arabic{dayinc@day}\fi}{Pfingstsonntag}
+%\typeout{Pfingstsonntag: \year-\arabic{dayinc@month}-\arabic{dayinc@day}}
+
+\stepdayinc
+\event*{\year-\ifnum\value{dayinc@month}<10 0\arabic{dayinc@month}\else\arabic{dayinc@month}\fi-%
+\ifnum\value{dayinc@day}<10 0\arabic{dayinc@day}\else\arabic{dayinc@day}\fi}{Pfingstmontag}
+%\typeout{Pfingstmontag: \year-\arabic{dayinc@month}-\arabic{dayinc@day}}
+
+\stepdayinc[10]
+\event*{\year-\ifnum\value{dayinc@month}<10 0\arabic{dayinc@month}\else\arabic{dayinc@month}\fi-%
+\ifnum\value{dayinc@day}<10 0\arabic{dayinc@day}\else\arabic{dayinc@day}\fi}{Fronleichnam}
+%\typeout{Fronleichnam: \year-\arabic{dayinc@month}-\arabic{dayinc@day}}
+
+\endinput

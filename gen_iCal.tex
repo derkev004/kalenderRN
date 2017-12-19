@@ -52,12 +52,30 @@
 
 \xdef\bon@year{2018}
 
+\newcount\myhours
+\newcount\myminutes
+
+\myhours   = \time
+\divide   \myhours by 60
+
+\myminutes = \time
+\multiply \myhours by 60
+
+\advance  \myminutes by -\myhours
+\divide   \myhours by 60
+
+\def\twochars#1{\ifnum#1<10 0#1\else#1\fi}
+
+\def\timestamp{\the\year\twochars{\the\month}\twochars{\the\day}T\twochars{\the\myhours}\twochars{\the\myminutes}00Z}
+\def\uid{\timestamp-\bon@year\twochars{\arabic{monatcnt}}\twochars{\arabic{tagcnt}}\twochars{\arabic{schichtcnt}}}
+
 \newcommand{\iCalPreamble}{%
 \emptytype
 \typeout{BEGIN:VCALENDAR}
 \typeout{METHOD:PUBLISH}
 \typeout{VERSION:2.0}
 \typeout{CALSCALE:GREGORIAN}
+\typeout{PRODID:Kevin F. Konrad//kfkonrad//gen_iCal.sh}
 }
 
 \newcommand{\iCalEvent}[2]{%
@@ -65,6 +83,8 @@
 %
 %\typeout{DTSTART:#1T000000Z}
 %\typeout{DTEND:#1T000100Z}
+\typeout{UID:\uid}
+\typeout{DTSTAMP:\timestamp}
 \typeout{DTSTART;VALUE=DATE:#1}
 \typeout{SUMMARY:#2}
 \typeout{TRANSP:TRANSPARENT}

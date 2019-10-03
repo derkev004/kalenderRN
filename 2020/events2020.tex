@@ -1,0 +1,92 @@
+
+% Jährlich wiederkehrende Termine sollten das Makro \year enthalten.
+% Yearly events should contain the macro \year.
+\usepackage{forloop,calc,ifthen}
+\iffalse
+\event*{\year-01-01}{Neujahr}
+\event{\year-03-14}{Albert Einstein (1879)}
+\event*{2016-03-25}{Karfreitag}
+\event{2016-03-27}{Ostersonntag}
+\event*{2016-03-28}{Ostermontag}
+\event*{\year-05-01}{Tag der Arbeit}
+\event*{2016-05-05}{Himmelfahrt}
+\event{2016-05-15}{Pfingstsonntag}
+\event*{2016-05-16}{Pfingstmontag}
+\event*{\year-10-03}{Tag der dt. Einheit}
+\event{\year-10-09}{John Lennon (1940)}
+\event{\year-12-24}{Heiligabend}
+\event*{\year-12-25}{1. Weihnachtstag}
+\event*{\year-12-26}{2. Weihnachtstag}
+\fi
+\period{2016-09-12}{2016-09-30}% Urlaub
+
+\newcounter{monatcnt}
+\setcounter{monatcnt}{1}
+\newcounter{tagcnt}
+\setcounter{tagcnt}{1}
+\newcounter{wochentagcnt}
+\setcounter{wochentagcnt}{\getdayofweek{\year}{1}{1}}
+\newcounter{schichtcnt}
+
+% Diesen Wert manuell anpassen
+% 0 ~ 2. freier Tag / Sonntagsschicht
+% 1 ~ früh
+% 2 ~ spät
+% 3 ~ nacht
+% 4 ~ 1. freier Tag
+\setcounter{schichtcnt}{4} %Schichtanfang ist
+
+
+\iftrue
+\forloop{monatcnt}{1}{\arabic{monatcnt} < 13}
+{
+
+  \forloop{tagcnt}{1}{\arabic{tagcnt} < \numexpr \geteom{\arabic{monatcnt}} + 1 \relax}
+  {
+  \stepcounter{wochentagcnt}
+  \setcounter{wochentagcnt}{\intcalcMod{\arabic{wochentagcnt}}{7}}
+  \ifthenelse{ \intcalcMod{\arabic{wochentagcnt}}{7}=4 }
+  {}
+  {
+    \typeout{\intcalcMod{\arabic{wochentagcnt}}{7}}
+    \stepcounter{schichtcnt}
+    \setcounter{schichtcnt}{\intcalcMod{\arabic{schichtcnt}}{5}}
+  }
+
+  \ifthenelse{\arabic{wochentagcnt} = 0}
+  {
+    \ifthenelse{\arabic{schichtcnt} = 2}
+    {\def\thistext{Früh}}
+    {
+      \ifthenelse{\arabic{schichtcnt} = 3}
+      {\def\thistext{Nacht}}
+      {\def\thistext{-}}
+    }
+  }
+  {
+    \ifthenelse{ \arabic{schichtcnt} = 1}
+    {\def\thistext{früh}}
+    {
+      \ifthenelse{ \arabic{schichtcnt} = 2}
+      {\def\thistext{spät}}
+      {
+        \ifthenelse{ \arabic{schichtcnt} = 3}
+        {\def\thistext{nacht}}
+        {\def\thistext{-}}
+      }
+    }
+  }
+
+
+
+  \event{\year-0\arabic{monatcnt}-0\arabic{tagcnt}}{\thistext}
+  \event{\year-\arabic{monatcnt}-0\arabic{tagcnt}}{\thistext}
+  \event{\year-0\arabic{monatcnt}-\arabic{tagcnt}}{\thistext}
+  \event{\year-\arabic{monatcnt}-\arabic{tagcnt}}{\thistext}
+  }
+}
+\fi
+
+
+
+\endinput

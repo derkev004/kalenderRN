@@ -1,0 +1,191 @@
+\documentclass{minimal}
+
+% Diese Werte manuell anpassen
+\xdef\bon@year{2021}
+\newcounter{schichtcnt}
+% 0 ~ 2. freier Tag / Sonntagsschicht
+% 1 ~ früh
+% 2 ~ spät
+% 3 ~ nacht
+% 4 ~ 1. freier Tag
+\setcounter{schichtcnt}{2} %Schichtanfang ist
+
+\usepackage{forloop,calc,ifthen,intcalc}
+
+\newwrite\myfile
+\immediate\openout\myfile=\jobname.ics
+\newcommand{\emptytype}{\immediate\write\myfile{}\immediate\write\myfile{}\immediate\write\myfile{}}
+
+\newcommand{\myend}{\begin{document}\end{document}}
+
+\let\equals\equal
+
+\newcommand{\geteom}[1]
+{
+\ifcase#1
+  \or 31 %1 Jan
+  \or \ifnum\intcalcMod{\bon@year}{4}=0 29 \else 28 \fi %2 Feb (evtl. Schaltjahr)
+  \or 31 %3 Mär
+  \or 30 %4 Apr
+  \or 31 %5 Mai
+  \or 30 %6 Jun
+  \or 31 %7 Jul
+  \or 31 %8 Aug
+  \or 30 %9 Sep
+  \or 31 %10 Okt
+  \or 30 %11 Nov
+  \or 31 %12 Dez
+\fi
+}
+
+\newcommand{\getdayofweek}[3]
+{%
+\intcalcMod{%
+\ifnum#2<3 #1-1\else#1\fi +%
+\intcalcDiv{\ifnum#2<3 #1-1 \else#1\fi}{4} -%
+\intcalcDiv{\ifnum#2<3 #1-1 \else#1\fi}{100} +%
+\intcalcDiv{\ifnum#2<3 #1-1 \else#1\fi}{400} +%
+\ifcase#2\or%
+0\or%1
+3\or%2
+2\or%3
+5\or%4
+0\or%5
+3\or%6
+5\or%7
+1\or%8
+4\or%9
+6\or%10
+2\or%11
+4\else%12
+0\fi%
++ #3 + 6}{7}%
+}
+
+
+\newcount\myhours
+\newcount\myminutes
+
+\myhours   = \time
+\divide   \myhours by 60
+
+\myminutes = \time
+\multiply \myhours by 60
+
+\advance  \myminutes by -\myhours
+\divide   \myhours by 60
+
+\def\twochars#1{\ifnum#1<10 0#1\else#1\fi}
+
+\def\timestamp{\the\year\twochars{\the\month}\twochars{\the\day}T\twochars{\the\myhours}\twochars{\the\myminutes}00Z}
+\def\uid{\timestamp-\bon@year\twochars{\arabic{monatcnt}}\twochars{\arabic{tagcnt}}\twochars{\arabic{schichtcnt}}}
+
+\newcommand{\iCalPreamble}{%
+\immediate\write\myfile{BEGIN:VCALENDAR}
+\immediate\write\myfile{METHOD:PUBLISH}
+\immediate\write\myfile{VERSION:2.0}
+\immediate\write\myfile{CALSCALE:GREGORIAN}
+\immediate\write\myfile{PRODID:Kevin F. Konrad//kfkonrad//Schichplan_E_\bon@year}
+}
+
+\newcommand{\iCalEvent}[2]{%
+\immediate\write\myfile{BEGIN:VEVENT}
+%
+%\immediate\write\myfile{DTSTART:#1T000000Z}
+%\immediate\write\myfile{DTEND:#1T000100Z}
+\immediate\write\myfile{UID:\uid}
+\immediate\write\myfile{DTSTAMP:\timestamp}
+\immediate\write\myfile{DTSTART;VALUE=DATE:#1}
+\immediate\write\myfile{SUMMARY:#2}
+\immediate\write\myfile{ORGANIZER:}
+\immediate\write\myfile{TRANSP:TRANSPARENT}
+%
+\immediate\write\myfile{BEGIN:VALARM}
+\immediate\write\myfile{TRIGGER;VALUE=DATE-TIME:19760401T005545Z}
+\immediate\write\myfile{ACTION:NONE}
+\immediate\write\myfile{END:VALARM}
+%
+\immediate\write\myfile{END:VEVENT}
+}
+
+\newcommand{\iCalPostamble}{%
+\immediate\write\myfile{END:VCALENDAR}
+}
+
+\newcommand{\maketwochars}[2]{
+\ifthenelse{#1<10}
+{\def\monthnum{0#1}}
+{\def\monthnum{#1}}
+\ifthenelse{#2<10}
+{\def\daynum{0#2}}
+{\def\daynum{#2}}
+}
+
+%\iCalPreamble
+%\iCalEvent{20170205}{Testfall}
+%\iCalEvent{20170206}{Testfall}
+%\iCalPostamble
+%\myend
+
+\iCalPreamble
+
+\newcounter{monatcnt}
+\setcounter{monatcnt}{1}
+\newcounter{tagcnt}
+\setcounter{tagcnt}{1}
+\newcounter{wochentagcnt}
+\setcounter{wochentagcnt}{\getdayofweek{\bon@year}{1}{1}}
+
+\forloop{monatcnt}{1}{\arabic{monatcnt} < 13}
+{
+
+  \forloop{tagcnt}{1}{\arabic{tagcnt} < \numexpr \geteom{\arabic{monatcnt}} + 1 \relax}
+  {
+    \stepcounter{wochentagcnt}
+    \setcounter{wochentagcnt}{\intcalcMod{\arabic{wochentagcnt}}{7}}
+    \ifthenelse{ \arabic{wochentagcnt}=4 }
+    {}
+    {
+      %\immediate\write\myfile{\intcalcMod{\arabic{wochentagcnt}}{7}}
+      \stepcounter{schichtcnt}
+      \setcounter{schichtcnt}{\intcalcMod{\arabic{schichtcnt}}{5}}
+    }
+
+    \ifthenelse{\arabic{wochentagcnt} = 0}
+    {
+      \ifthenelse{\arabic{schichtcnt} = 2}
+      {\def\thistext{Früh}}
+      {
+        \ifthenelse{\arabic{schichtcnt} = 3}
+        {\def\thistext{Nacht}}
+        {\def\thistext{frei}}
+      }
+    }
+    {
+      \ifthenelse{ \arabic{schichtcnt} = 1}
+      {\def\thistext{früh}}
+      {
+        \ifthenelse{ \arabic{schichtcnt} = 2}
+        {\def\thistext{spät}}
+        {
+          \ifthenelse{ \arabic{schichtcnt} = 3}
+          {\def\thistext{nacht}}
+          {\def\thistext{frei}}
+        }
+      }
+    }
+
+    \maketwochars{\arabic{monatcnt}}{\arabic{tagcnt}}
+    %\immediate\write\myfile{\daynum}
+    %\immediate\write\myfile{\monthnum}
+  %\iCalEvent{20170205}{Testfall}
+  \ifthenelse{ \equal{\thistext}{frei}}
+  {}
+  {\iCalEvent{\bon@year\monthnum\daynum}{\thistext}}
+
+  }
+}
+
+\iCalPostamble
+
+\myend
